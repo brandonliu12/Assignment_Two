@@ -1,0 +1,89 @@
+Sub Stock()
+    Dim ws As Worksheet
+    For Each ws In Worksheets
+        ' Set column names
+        With ws
+            .Range("I1").Value = "Ticker"
+            .Range("J1").Value = "Quarterly Change"
+            .Range("K1").Value = "Percent Change"
+            .Range("L1").Value = "Total Stock Volume"
+            .Range("M1").Value = "Greatest % Increase"
+            .Range("N1").Value = "Greatest % Decrease"
+            .Range("O1").Value = "Greatest Volume"
+
+            Dim j As Long
+            Dim lastrow As Long
+            Dim volume As Double
+            Dim quarter_change As Double
+            Dim opening_price As Double
+            Dim maxIncrease As Double
+            Dim maxDecrease As Double
+            Dim maxVolume As Double
+
+            j = 2
+            lastrow = .Cells(.Rows.Count, 1).End(xlUp).Row
+            volume = 0
+            maxIncrease = 0
+            maxDecrease = 0
+            maxVolume = 0
+            Dim firstTickerEntry As Boolean
+            firstTickerEntry = True  ' Flag to identify the first entry of a new ticker
+
+            ' Loop through each row
+            Dim i As Long
+            For i = 2 To lastrow
+                Dim current As String
+                Dim nextone As String
+                current = .Cells(i, 1).Value
+                If i < lastrow Then
+                    nextone = .Cells(i + 1, 1).Value
+                Else
+                    nextone = ""
+                End If
+
+                ' Check if it's the first entry of the ticker
+                If firstTickerEntry Then
+                    opening_price = .Cells(i, 3).Value
+                    firstTickerEntry = False
+                End If
+
+                volume = volume + .Cells(i, 7).Value
+                
+                If current <> nextone Then
+                    .Cells(j, 9).Value = current
+                    .Cells(j, 12).Value = volume
+                    quarter_change = .Cells(i, 6).Value - opening_price
+                    .Cells(j, 10).Value = quarter_change
+                    Dim percentChange As Double
+                    percentChange = (quarter_change / opening_price) * 100
+                    .Cells(j, 11).Value = percentChange
+
+                    ' Update max and min values
+                    If percentChange > maxIncrease Then maxIncrease = percentChange
+                    If percentChange < maxDecrease Then maxDecrease = percentChange
+                    If volume > maxVolume Then maxVolume = volume
+
+                    volume = 0
+                    firstTickerEntry = True
+                    j = j + 1
+                End If
+            Next i
+            
+            ' Output max and min values
+            .Cells(2, 13).Value = maxIncrease
+            .Cells(2, 14).Value = maxDecrease
+            .Cells(2, 15).Value = maxVolume
+
+            ' Formatting
+            For a = 2 To j - 1
+                .Range("K" & a).NumberFormat = "0.00%"
+                If .Range("J" & a).Value > 0 Then
+                    .Range("J" & a).Interior.ColorIndex = 4
+                ElseIf .Range("J" & a).Value < 0 Then
+                    .Range("J" & a).Interior.ColorIndex = 3
+                End If
+            Next a
+        End With
+    Next ws
+End Sub
+
